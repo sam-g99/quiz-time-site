@@ -72,7 +72,7 @@ require('./routes/quizSocket.js')(io);
 
 app.use(
   cors({
-    origin: ['http://192.168.1.2:8080'],
+    origin: ['http://192.168.1.7:8080'],
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -92,7 +92,7 @@ app.use('/quiz', require('./routes/quiz'));
 
 database.sync().then(() => {
   http.listen(process.env.PORT, () => {
-    console.log(`Server started http://192.168.1.2:${process.env.PORT}`);
+    console.log(`Server started http://192.168.1.7:${process.env.PORT}`);
   });
 })
   .catch((error) => console.log(error));
