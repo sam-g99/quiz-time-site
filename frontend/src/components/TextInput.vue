@@ -1,7 +1,7 @@
 <template>
   <input
     ref="input"
-    v-model="value"
+    v-model="inputValue"
     :type="type"
     name=""
     :required="required"
@@ -33,9 +33,14 @@ export default {
       default: false,
     },
   },
+  data() {
+    return {
+      inputValue: '',
+    };
+  },
   watch: {
-    value() {
-      this.$emit('input', this.value);
+    inputValue() {
+      this.$emit('input', this.inputValue);
     },
   },
   mounted() {

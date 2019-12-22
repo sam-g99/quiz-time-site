@@ -12,7 +12,7 @@ const vuexPersist = new VuexPersist({
 const store = new Vuex.Store({
   plugins: [vuexPersist.plugin],
   state: {
-    api: 'http://192.168.1.2:3001',
+    api: 'http://192.168.1.7:3001',
     loggedIn: false,
     username: '',
   },

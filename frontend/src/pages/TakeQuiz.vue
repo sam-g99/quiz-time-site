@@ -2,18 +2,20 @@
   <div>
     <h1>{{ title }}</h1>
     <p>{{ desc }}</p>
-    <div v-for="(question, index) in questions" :key="index" class="question">
-      <a :name="index"></a>
-      <h3>Question {{ index + 1 }}</h3>
-      <h4>{{ question.question }}</h4>
-      <div v-for="(option, qIndex) in question.options" :key="qindex">
+    <p>{{ timeLeft }}</p>
+    <div class="question">
+      <h3>Question 1</h3>
+      <h4>{{ question.question.text }}</h4>
+      <div v-for="option in question.options" :key="option.id">
         <input
-          :id="`${index}${qIndex}`"
-          :name="index"
-          :value="option"
+          :id="option.id"
+          name="test"
+          :disabled="answerPending"
+          :value="option.option"
           type="radio"
+          @click="submitAnswer"
         />
-        <label :for="`${index}${qIndex}`"> {{ option }} </label>
+        <label :for="option.id"> {{ option.option }} </label>
       </div>
     </div>
   </div>
@@ -27,31 +29,37 @@ export default {
     return {
       title: '',
       desc: '',
-      questions: [],
-      socket: io('http://192.168.1.2:3001'),
+      question: {},
+      socket: io('http://192.168.1.7:3001'),
+      timeLeft: 0,
+      answerPending: false,
     };
   },
   mounted() {
-    // this.axios
-    //   .get(`${this.$store.state.api}/quiz/quiz`, {
-    //     params: {
-    //       quizId: this.$route.params.id,
-    //     },
-    //   })
-    //   .then(quiz => {
-    //     const { title, desc, questions } = quiz.data;
-    //     console.log(quiz.data);
-    //     this.title = title;
-    //     this.desc = desc;
-    //     this.questions = questions;
-    //   });
     this.socket.emit('quizTime', this.$route.params.id);
+
     this.socket.on('quiz', quiz => {
-      const { title, desc, questions } = quiz;
+      const { title, desc, question } = quiz;
       console.log(quiz);
       this.title = title;
       this.desc = desc;
+      this.question = question;
     });
+
+    this.socket.on('question', question => {
+      const { data } = question;
+      this.question = data;
+    });
+
+    this.socket.on('timer', timer => {
+      this.timeLeft = timer;
+    });
+  },
+  methods: {
+    submitAnswer(e) {
+      this.answerPending = true;
+      this.socket.emit('answer', parseInt(e.target.id, 10));
+    },
   },
 };
 </script>
