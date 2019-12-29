@@ -1,49 +1,93 @@
 // const crypto = require('crypto');
+const shortid = require('shortid');
 const { getQuiz } = require('./utils/getQuiz');
 // const QuizSession = require('../database/models/quizSession');
 // const QuizSessionQuestion = require('../database/models/quizSessionQuestions');
+
+const quizError = (quiz) => {
+  const notFound = 404;
+  if (quiz === notFound || !quiz) {
+    return true;
+  }
+  return false;
+};
 
 
 module.exports = (io) => {
   io.on('connection', async (socket) => {
     console.log('connected');
 
-    socket.on('quizTime', async (quizId) => {
-      const quiz = await getQuiz(quizId);
-      console.log(quiz);
 
-      if (quiz === 404) {
-        socket.emit(404);
-        return;
-      } if (!quiz) {
-        socket.emit('err');
+    socket.on('quizTime', async (req) => {
+      const { id, mode } = req;
+      if (!shortid.isValid(id)) {
+        console.log('Invalid quiz id');
         return;
       }
 
-      socket.emit('quiz', quiz.clientQuizPackage);
+      const modes = ['single', 'multi'];
 
-      const correct = (optionId) => {
-        const query = ({ id }) => id === optionId;
-        const option = quiz.data.options.find(query);
-        return option.is_correct;
-      };
-      const nextQuestionTime = 1000;
+      if (!modes.includes(mode)) {
+        console.log('invalid mode');
+        return;
+      }
+
+      const quiz = await getQuiz(id);
+
+      if (quizError(quiz)) {
+        console.log('Quiz unavailable.');
+        return;
+      }
+
+      // Send Quiz
+      socket.emit('quiz', quiz.clientPackage);
+
+      let currentQuestionIndex = 0;
+
+      let isLastQuestion = false;
+      const coolDown = 700;
       const nextQuestion = () => {
-        const q = quiz.data.questions[1];
-        q.number = 2;
-        socket.emit('question', q);
-        console.log('question sent');
+        setTimeout(() => {
+          if (isLastQuestion || quiz.data.questions.length === 1) {
+            socket.emit('done');
+            return;
+          }
+          const q = quiz.data.questions[currentQuestionIndex += 1];
+          const { length } = quiz.data.questions;
+          if (length === currentQuestionIndex + 1) {
+            isLastQuestion = true;
+          }
+          q.number = currentQuestionIndex + 1;
+          socket.emit('question', q);
+          console.log('question sent');
+        }, coolDown);
       };
-      socket.on('answer', (optionId) => {
-        if (correct(optionId)) {
-          console.log('Welp they got it right');
-          socket.emit('right');
-          setTimeout(nextQuestion, nextQuestionTime);
-        } else {
-          console.log('They got it WRONG');
-          socket.emit('wrong');
-          setTimeout(nextQuestion, nextQuestionTime);
+
+      const correct = (optionId) => quiz.data.answers[currentQuestionIndex].id === optionId;
+
+      const submitAnswer = (optionId) => {
+        switch (mode) {
+          case 'single': {
+            socket.emit('result', correct(optionId));
+            nextQuestion();
+            break;
+          }
+          default: {
+            console.log('default');
+          }
         }
+      };
+
+      if (req.mode === 'single') {
+        socket.on('answer', (optionId) => {
+          submitAnswer(optionId);
+        });
+        return;
+      }
+
+
+      socket.on('answer', (optionId) => {
+
       });
 
       // const { userId, takingQuiz } = socket.handshake.session;

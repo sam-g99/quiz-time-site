@@ -44,11 +44,12 @@ app.use(helmet({
   referrerPolicy: { policy: 'same-origin' },
 }));
 
+app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(speedLimiter);
 app.use(limiter);
-app.use(cookieParser());
+
 const session = expressSession({
   secret: process.env.SESSION_SECRET,
   key: 'user_session',

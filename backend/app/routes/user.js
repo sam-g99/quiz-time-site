@@ -8,9 +8,11 @@ const uuidv4 = require('uuid/v4');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const User = require('../database/models/users');
+const Session = require('../database/models/sessions');
 const LoginAttempt = require('../database/models/attempts');
 const QuizSession = require('../database/models/quizSession');
 const QuizSessionQuestion = require('../database/models/quizSessionQuestions');
+
 
 const signUpLimit = rateLimit({
   windowMs: 10 * 60 * 1000,
@@ -50,20 +52,24 @@ const mailVerification = async (userEmail, subject, text, html) => {
   console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
 };
 
-const isAuthorized = (req) => {
+const isAuthorized = async (req) => {
   if (req.session.userId) {
+    return true;
+  }
+  const loginCookie = req.cookies.login_secret;
+  if (loginCookie) {
+    const loginSession = Session.findOne({ where: { cookie: loginCookie } });
+    const userId = loginSession.user_id;
+    req.session.userId = userId;
     return true;
   }
   return false;
 };
 
 router.post('/logged-in', (req, res) => {
-  if (req.session.userId) {
-    res.status(201).send(true);
-    return;
-  }
-  res.status(201).send(false);
+  res.status(201).send(isAuthorized(req));
 });
+
 router.post('/signup', signUpLimit, async (req, res) => {
   const {
     username, email, password1, password2,
@@ -160,7 +166,7 @@ router.get('/verify', async (req, res) => {
     })
     .catch((err) => {
       console.log(err);
-      res.status(500).send('Something went wrong, try again later');
+      res.status(500).send('Something went wrong, try again later.');
     });
 });
 
@@ -178,7 +184,7 @@ const logAttempt = (req, failed) => {
 router.post('/login', loginLimit, async (req, res) => {
   const loggedIn = await isAuthorized(req);
   if (loggedIn) {
-    res.status(201).send({ message: 'You\'re already logged in!', username: req.session.username });
+    res.status(201).send({ message: 'You\'re already logged in!' });
     return;
   }
 
@@ -204,11 +210,18 @@ router.post('/login', loginLimit, async (req, res) => {
             if (result) {
               logAttempt(req, false);
               req.session.userId = user.id;
-              req.session.username = user.username;
-              const loginSessionCode = crypto.randomBytes(150).toString('hex');
+              const loginSessionCode = crypto.randomBytes(180).toString('hex');
               if (stay) {
                 res.cookie('login_secret', loginSessionCode, { maxAge: 900000, httpOnly: true });
-                console.log(crypto.randomBytes(150).toString('hex'));
+                Session.create({
+                  device: req.headers['user-agent'],
+                  cookie: loginSessionCode,
+                  date: new Date(),
+                  user_id: user.id,
+                }).catch((err) => {
+                  console.log(err);
+                  res.status(500).send('Something went wrong, try again later.');
+                });
               }
               res.status(201).send({ message: 'You\'re now logged in', username: user.username });
             } else {
@@ -228,6 +241,14 @@ router.post('/login', loginLimit, async (req, res) => {
 
 router.post('/logout', async (req, res) => {
   req.session.destroy();
+  const loginCookie = req.cookies.login_secret;
+  if (loginCookie) {
+    Session.destroy({ where: { cookie: loginCookie } });
+  }
+
+  res.clearCookie('login_secret');
+  res.clearCookie('user_session');
+
   res.status(201).send('You are logged out');
 });
 

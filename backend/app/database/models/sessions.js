@@ -1,15 +1,15 @@
 const {
-  STRING, DATE, NOW, INT,
+  STRING, DATE, NOW, INTEGER,
 } = require('sequelize');
 const database = require('../');
 
 const Session = database.define('Session', {
   device: {
-    type: STRING(256),
+    type: STRING(500),
     required: true,
   },
   cookie: {
-    type: STRING(256),
+    type: STRING(500),
     required: true,
   },
   date: {
@@ -18,7 +18,7 @@ const Session = database.define('Session', {
     required: true,
   },
   user_id: {
-    type: INT,
+    type: INTEGER,
     required: true,
   },
 });

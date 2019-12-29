@@ -2,15 +2,13 @@ const express = require('express');
 
 
 const router = express.Router();
-
 const shortid = require('shortid');
 const crypto = require('crypto');
-
 const Quiz = require('../database/models/quizzes');
 const Question = require('../database/models/questions');
 const Option = require('../database/models/options');
 const QuizSession = require('../database/models/quizSession');
-const QuizSessionQuestion = require('../database/models/quizSessionQuestions');
+const Session = require('../database/models/sessions');
 
 const serverError = (err, res) => {
   res.status(500).send('Something went wrong, try again later.');
@@ -20,8 +18,15 @@ const missingData = (res) => {
   res.status(400).send('Something is missing.');
 };
 
-const isAuthorized = (req) => {
+const isAuthorized = async (req) => {
   if (req.session.userId) {
+    return true;
+  }
+  const loginCookie = req.cookies.login_secret;
+  if (loginCookie) {
+    const loginSession = Session.findOne({ where: { cookie: loginCookie } });
+    const userId = loginSession.user_id;
+    req.session.userId = userId;
     return true;
   }
   return false;
@@ -34,6 +39,7 @@ router.post('/create', async (req, res) => {
 
   if (!loggedIn) {
     res.status(403).send('You need to login to create a quiz.');
+    return;
   }
 
   const { title, description, questions } = req.body;

@@ -43,18 +43,25 @@ module.exports.getQuiz = async (id) => {
       .map((o) => ({ id: o.id, option: o.option })),
   }));
 
-  console.log(questions);
+  const answers = questions.map((q) => ({
+    id: options.filter((o) => o.question_id === q.id && o.is_correct === true)
+      .map((o) => o.id)[0],
+  }));
+
+  console.log(answers, 'answers');
+
   const data = {
     quiz,
     options,
     questions,
+    answers,
   };
 
   const questionToSend = questions[0];
   questionToSend.number = 1;
 
   console.log(questionToSend, 'to send');
-  const clientQuizPackage = {
+  const clientPackage = {
     info: {
       title: quiz.title,
       desc: quiz.description,
@@ -65,6 +72,6 @@ module.exports.getQuiz = async (id) => {
 
   return {
     data,
-    clientQuizPackage,
+    clientPackage,
   };
 };
