@@ -7,8 +7,8 @@ const expressValidator = require('express-validator');
 const expressSession = require('express-session');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
-const mongoose = require('mongoose');
 const morgan = require('morgan');
+const os = require('os');
 const slowDown = require('express-slow-down');
 
 const app = express(); // Define express app
@@ -91,9 +91,21 @@ app.use('/user', require('./routes/user'));
 app.use('/quiz', require('./routes/quiz'));
 
 
+// get the devices network ip
+const interfaces = os.networkInterfaces();
+const addresses = [];
+for (const k in interfaces) {
+  for (const k2 in interfaces[k]) {
+    const address = interfaces[k][k2];
+    if (address.family === 'IPv4' && !address.internal) {
+      addresses.push(address.address);
+    }
+  }
+}
+
 database.sync().then(() => {
   http.listen(process.env.PORT, () => {
-    console.log(`Server started http://192.168.1.7:${process.env.PORT}`);
+    console.log(`Server started http://${addresses[0]}:${process.env.PORT}`);
   });
 })
   .catch((error) => console.log(error));

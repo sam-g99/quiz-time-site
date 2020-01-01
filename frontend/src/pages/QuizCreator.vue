@@ -14,7 +14,7 @@
         </a>
       </div>
       <div v-for="(question, index) in questions" :key="index" class="question">
-        <button type="button" @click="deleteQuestion(index)">
+        <button class="delete" type="button" @click="deleteQuestion(index)">
           Delete Question
         </button>
         <a :name="index"></a>
@@ -30,7 +30,11 @@
             type="text"
             :placeholder="`option ${oIndex + 1}`"
           />
-          <button type="button" @click="deleteOption(index, oIndex)">
+          <button
+            v-if="question.options.length > 2"
+            type="button"
+            @click="deleteOption(index, oIndex)"
+          >
             Delete Option
           </button>
           <button
@@ -41,7 +45,13 @@
             Set as answer
           </button>
         </div>
-        <button type="button" @click="addOption(index)">Add Option</button>
+        <button
+          v-if="question.options.length < 4"
+          type="button"
+          @click="addOption(index)"
+        >
+          Add Option
+        </button>
       </div>
       <br />
       <button type="button" @click="addQuestion">New Question</button>
@@ -115,6 +125,21 @@ export default {
       });
     },
     createQuiz() {
+      if (!this.name) {
+        alert('Please name this quiz.');
+        return;
+      }
+      if (!this.desc) {
+        alert('Enter a description for your quiz.');
+        return;
+      }
+      const missingOption = o => o.options.indexOf('');
+      this.questions.forEach((q, i) => {
+        if (!q.question) {
+          alert(`Please enter a question for question ${i + 1}`);
+        }
+      });
+      return;
       this.axios
         .post(`${this.$store.state.api}/quiz/create`, {
           title: this.name,
@@ -145,6 +170,7 @@ form {
   display: flex;
   flex-flow: column;
   max-width: 500px;
+  width: 100%;
   .question {
     display: flex;
     flex-flow: column;
@@ -153,13 +179,28 @@ form {
 
 .creator-container {
   height: 100%;
-  padding-bottom: 2000px;
+  padding-bottom: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 input {
   width: 100%;
+  padding: 5px;
+  border: none;
 }
 
+button {
+  border: none;
+  padding: 5px;
+  outline: none;
+}
+.delete {
+  background: rgb(255, 98, 98);
+  color: rgb(126, 0, 0);
+  font-weight: 800;
+}
 .answer {
   background-color: green;
 }
