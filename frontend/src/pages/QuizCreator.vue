@@ -1,9 +1,25 @@
 <template>
   <div class="creator-container">
     <form @submit.prevent="createQuiz">
-      <input v-model="name" type="text" placeholder="Quiz name" />
-      <input v-model="desc" type="text" placeholder="Enter short description" />
-      <p>Your questions</p>
+      <div class="name-desc">
+        <label for="qName"> Quiz name </label>
+        <input
+          id="qName"
+          v-model="name"
+          type="text"
+          placeholder="Enter quiz name"
+        />
+        <label for="desc"> Description </label>
+        <input
+          id="desc"
+          v-model="desc"
+          type="text"
+          placeholder="Enter short description"
+        />
+      </div>
+      <div class="section-cut">
+        <p>Your questions</p>
+      </div>
       <div class="question-anchors">
         <a
           v-for="(question, index) in questions"
@@ -138,8 +154,15 @@ export default {
         if (!q.question) {
           alert(`Please enter a question for question ${i + 1}`);
         }
-        if (q.options.some(o => o.option.trim() === '')) {
+        const checkIfOptionEmpty = ({ option }) => option.trim() === '';
+        if (q.options.some(checkIfOptionEmpty)) {
           alert(`Please enter missing option in question ${i + 1}`);
+          return;
+        }
+        const checkIfAnswerSet = ({ correct }) => correct === true;
+
+        if (!q.options.some(checkIfAnswerSet)) {
+          alert(`Please set answer for question ${i + 1}`);
         }
       });
       return;
@@ -192,6 +215,10 @@ input {
   width: 100%;
   padding: 5px;
   border: none;
+  outline: none;
+  padding: 10px;
+  font-size: 16px;
+  margin-bottom: 10px;
 }
 
 button {
@@ -206,5 +233,38 @@ button {
 }
 .answer {
   background-color: green;
+}
+
+.name-desc {
+  label {
+    color: white;
+    display: block;
+    margin-bottom: 5px;
+    margin-top: 10px;
+
+    &:first-child {
+      font-size: 22px;
+    }
+  }
+  input {
+    margin: 0;
+  }
+}
+
+h3 {
+  color: white;
+  font-weight: 400;
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
+.section-cut {
+  background: #3660a3;
+  display: block;
+  width: 100%;
+  padding: 5px;
+  color: white;
+  border-radius: 5px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 </style>
