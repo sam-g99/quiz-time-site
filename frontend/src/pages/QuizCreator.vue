@@ -133,10 +133,13 @@ export default {
         alert('Enter a description for your quiz.');
         return;
       }
-      const missingOption = o => o.options.indexOf('');
+
       this.questions.forEach((q, i) => {
         if (!q.question) {
           alert(`Please enter a question for question ${i + 1}`);
+        }
+        if (q.options.some(o => o.option.trim() === '')) {
+          alert(`Please enter missing option in question ${i + 1}`);
         }
       });
       return;
