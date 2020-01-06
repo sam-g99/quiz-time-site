@@ -18,7 +18,7 @@ export default {
       const loggedIn = localStorage.getItem('loggedIn');
       const username = localStorage.getItem('username');
       if (loggedIn) {
-        console.log('checked');
+        console.log('checked auth');
         this.isAuth();
       }
     },
