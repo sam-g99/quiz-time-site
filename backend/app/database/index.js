@@ -11,7 +11,7 @@ const connect = () => {
     port,
     logging: false,
   };
-  return new Sequelize(name, username, password, config);
+  return new Sequelize(name, username, password, config, );
 };
 
 module.exports = connect();
