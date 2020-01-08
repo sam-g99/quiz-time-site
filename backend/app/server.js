@@ -82,15 +82,6 @@ app.use(
 
 app.use(morgan('combined'));
 
-
-app.get('/', (req, res) => {
-  res.status(201).send('Quiz Time API.');
-});
-
-app.use('/user', require('./routes/user'));
-app.use('/quiz', require('./routes/quiz'));
-
-
 // get the devices network ip
 const interfaces = os.networkInterfaces();
 const addresses = [];
@@ -103,9 +94,22 @@ for (const k in interfaces) {
   }
 }
 
+const localAddress = addresses[0];
+
+// make this for dev environment only
+app.set('localAddress', localAddress);
+
+app.get('/', (req, res) => {
+  res.status(201).send('Quiz Time API.');
+});
+
+app.use('/user', require('./routes/user'));
+app.use('/quiz', require('./routes/quiz'));
+
+
 database.sync().then(() => {
   http.listen(process.env.PORT, () => {
-    console.log(`Server started http://${addresses[0]}:${process.env.PORT}`);
+    console.log(`Server started http://${localAddress}:${process.env.PORT}`);
   });
 })
   .catch((error) => console.log(error));

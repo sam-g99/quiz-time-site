@@ -139,7 +139,7 @@ router.post('/signup', signUpLimit, async (req, res) => {
     created: new Date(),
   })
     .then(() => {
-      const html = `<a href="http://192.168.1.3:3001/user/verify?code=${verificationCode}" target="_blank">Click here</a>`;
+      const html = `<a href="http://${req.app.get('localAddress')}:${process.env.PORT}/user/verify?code=${verificationCode}" target="_blank">Click here</a>`;
       mailVerification(email, 'Verification', 'oop', html);
       res.status(201).send('User created');
     })
