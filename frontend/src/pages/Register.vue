@@ -1,7 +1,10 @@
 <template>
   <div :class="{ visible: loaded }" class="login-page">
     <img id="svg" src="@/assets/logo.svg" alt="quiz time logo" />
-    <form @submit.prevent="login">
+    <div v-if="created" class="created">
+      You signed up verify your email
+    </div>
+    <form v-if="!created" @submit.prevent="login">
       <h2>Hey, Register</h2>
       <TextInput
         :required="true"
@@ -59,6 +62,7 @@ export default {
       password2: '',
       errorMessage: '',
       loading: false,
+      created: false,
     };
   },
   mounted() {
@@ -85,9 +89,14 @@ export default {
           password2: this.password2,
         })
         .then(res => {
-          console.log('user created');
+          const { status } = res;
+          if (status === 201) {
+            this.created = true;
+          }
         })
         .catch(err => {
+          if (!err) return;
+
           console.log(err.response);
           this.loading = false;
           const { status } = err.response;
