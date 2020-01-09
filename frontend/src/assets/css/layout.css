@@ -6,6 +6,8 @@
 	margin: 0;
 	padding: 0;
 }
+:focus {outline:none;}
+::-moz-focus-inner {border:0;}
 html{
 	background: #253d63;
 	height: 100%;
@@ -16,3 +18,5 @@ body{
 	background: #253d63;
 	padding:15px;
 }
+
+  
