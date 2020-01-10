@@ -12,7 +12,9 @@ const Session = require('../database/models/sessions');
 const LoginAttempt = require('../database/models/attempts');
 const QuizSession = require('../database/models/quizSession');
 const QuizSessionQuestion = require('../database/models/quizSessionQuestions');
+const isAuthorized = require('./utils/authorized');
 
+console.log(isAuthorized);
 
 const signUpLimit = rateLimit({
   windowMs: 10 * 60 * 1000,
@@ -52,22 +54,8 @@ const mailVerification = async (userEmail, subject, text, html) => {
   console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
 };
 
-const isAuthorized = async (req) => {
-  if (req.session.userId) {
-    return true;
-  }
-  const loginCookie = req.cookies.login_secret;
-  if (loginCookie) {
-    const loginSession = Session.findOne({ where: { cookie: loginCookie } });
-    const userId = loginSession.user_id;
-    req.session.userId = userId;
-    return true;
-  }
-  return false;
-};
-
-router.post('/logged-in', (req, res) => {
-  res.status(201).send(isAuthorized(req));
+router.post('/logged-in', async (req, res) => {
+  res.status(201).send(await isAuthorized(req));
 });
 
 router.post('/signup', signUpLimit, async (req, res) => {
@@ -212,7 +200,8 @@ router.post('/login', loginLimit, async (req, res) => {
               req.session.userId = user.id;
               const loginSessionCode = crypto.randomBytes(180).toString('hex');
               if (stay) {
-                res.cookie('login_secret', loginSessionCode, { maxAge: 900000, httpOnly: true });
+                // 30 days
+                res.cookie('login_secret', loginSessionCode, { maxAge: 2592000000, httpOnly: true });
                 Session.create({
                   device: req.headers['user-agent'],
                   cookie: loginSessionCode,
@@ -245,7 +234,6 @@ router.post('/logout', async (req, res) => {
   if (loginCookie) {
     Session.destroy({ where: { cookie: loginCookie } });
   }
-
   res.clearCookie('login_secret');
   res.clearCookie('user_session');
 
@@ -315,7 +303,6 @@ router.post('/change-password', async (req, res) => {
     res.status(400).send('Passwords submitted are the same');
     return;
   }
-
   User.findOne({ where: { id: req.session.userId } })
     .then((user) => {
       if (user) {
@@ -336,7 +323,8 @@ router.post('/change-password', async (req, res) => {
           })
           .catch((err) => { serverError(err, res); });
       }
-    });
+    })
+    .catch((err) => console.log(err));
 });
 
 router.post('/delete-account', async (req, res) => {
@@ -400,8 +388,15 @@ router.get('/profile', async (req, res) => {
   User.findOne({ where: { username } })
     .then((user) => {
       if (user) {
-        const { created, email } = user;
-        res.status(201).send({ username: user.username, created, email });
+        const { created, email, id } = user;
+        const dataToSend = { username: user.username, created };
+
+        if (id === req.session.userId) {
+          dataToSend.email = email;
+          dataToSend.currentUser = true;
+        }
+
+        res.status(201).send(dataToSend);
       } else {
         res.status(404).send('User does not exist.');
       }

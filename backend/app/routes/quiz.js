@@ -9,6 +9,8 @@ const Question = require('../database/models/questions');
 const Option = require('../database/models/options');
 const QuizSession = require('../database/models/quizSession');
 const Session = require('../database/models/sessions');
+const isAuthorized = require('./utils/authorized');
+
 
 const serverError = (err, res) => {
   res.status(500).send('Something went wrong, try again later.');
@@ -16,20 +18,6 @@ const serverError = (err, res) => {
 
 const missingData = (res) => {
   res.status(400).send('Something is missing.');
-};
-
-const isAuthorized = async (req) => {
-  if (req.session.userId) {
-    return true;
-  }
-  const loginCookie = req.cookies.login_secret;
-  if (loginCookie) {
-    const loginSession = Session.findOne({ where: { cookie: loginCookie } });
-    const userId = loginSession.user_id;
-    req.session.userId = userId;
-    return true;
-  }
-  return false;
 };
 
 // Where quiz creation happens
