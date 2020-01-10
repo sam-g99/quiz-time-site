@@ -15,30 +15,30 @@ export default {
   components: { Navigation, MobileNav },
   watch: {
     $route() {
-      const loggedIn = localStorage.getItem('loggedIn');
-      const username = localStorage.getItem('username');
-      if (loggedIn) {
-        console.log('checked');
-        this.isAuth();
-      }
+      this.isAuth();
     },
   },
   mounted() {
-    const { loggedIn } = this.$store.state;
-    if (loggedIn) {
-      this.isAuth();
-    }
+    this.isAuth();
   },
   methods: {
     isAuth() {
       this.axios
         .post(`${this.$store.state.api}/user/logged-in`)
         .then(loggedIn => {
+          console.log(loggedIn);
           if (!loggedIn.data) {
             this.$store.commit('auth', {
               bool: false,
               username: '',
             });
+            console.log('auth rejected');
+          } else {
+            this.$store.commit('auth', {
+              bool: true,
+              username: '',
+            });
+            console.log('auth accepted');
           }
         });
     },

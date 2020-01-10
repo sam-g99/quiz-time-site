@@ -21,7 +21,7 @@ export default {
       email: '',
       joined: '',
       password: '',
-      newPassword: 'password',
+      newPassword: 'randompasswordholder',
     };
   },
   mounted() {

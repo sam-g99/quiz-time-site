@@ -165,7 +165,6 @@ export default {
           alert(`Please set answer for question ${i + 1}`);
         }
       });
-      return;
       this.axios
         .post(`${this.$store.state.api}/quiz/create`, {
           title: this.name,
